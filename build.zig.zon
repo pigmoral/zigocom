@@ -1,0 +1,18 @@
+.{
+    .name = "zigocom",
+    .version = "0.0.0",
+    .minimum_zig_version = "0.14.0",
+    .dependencies = .{
+        .serial = .{
+            .url = "git+https://github.com/ZigEmbeddedGroup/serial#81a32d1b9668e7b024ccb22fa93aa561ceb17e56",
+            .hash = "1220d5ce1533d5fb11f5632eb707f000d13e15ecc53748854cc968f61bf5a71d7b94",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "LICENSE",
+        "README.md",
+    },
+}
