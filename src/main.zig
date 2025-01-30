@@ -9,6 +9,8 @@ const posix = std.posix;
 
 const zig_serial = @import("serial");
 
+const Term = @import("Term.zig");
+
 const usage =
     \\Usage: zigocom [options] <port>
     \\
@@ -28,14 +30,6 @@ fn loop(serial: fs.File) !void {
 
     const stdout = io.getStdOut();
     const stdin = io.getStdIn();
-
-    const original_termios = try std.posix.tcgetattr(stdin.handle);
-    defer std.posix.tcsetattr(stdin.handle, .FLUSH, original_termios) catch {};
-
-    var termios = original_termios;
-    termios.lflag.ICANON = false;
-    termios.lflag.ECHO = false;
-    try std.posix.tcsetattr(stdin.handle, .FLUSH, termios);
 
     var fds = [_]posix.pollfd{
         .{
@@ -113,6 +107,14 @@ fn mainArgs(gpa: Allocator, arena: Allocator, args: []const []const u8) !void {
     try zig_serial.configureSerialPort(serial, serial_config);
 
     std.debug.print("port: {s}, baudrate: {d}\n", .{ port, serial_config.baud_rate });
+
+    var term = try Term.init(io.getStdIn().handle);
+    defer term.deinit();
+
+    var lflag = term.getLFlag();
+    lflag.ICANON = false;
+    lflag.ECHO = false;
+    try term.setLFlag(lflag);
 
     try loop(serial);
 }
