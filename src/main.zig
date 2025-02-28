@@ -6,6 +6,7 @@ const process = std.process;
 const fmt = std.fmt;
 const fs = std.fs;
 const posix = std.posix;
+const log = std.log;
 
 const zig_serial = @import("serial");
 
@@ -21,7 +22,7 @@ const usage =
 ;
 
 pub fn fatal(comptime format: []const u8, args: anytype) noreturn {
-    std.log.err(format, args);
+    log.err(format, args);
     process.exit(1);
 }
 
@@ -45,16 +46,18 @@ fn loop(serial: fs.File) !void {
     };
 
     while (true) {
-        const ready = posix.poll(&fds, 1000) catch 0;
-        if (ready == 0) continue;
+        _ = posix.poll(&fds, -1) catch |err| {
+            log.err("poll failed: {s}\n", .{@errorName(err)});
+            break;
+        };
 
-        if (fds[0].revents == posix.POLL.IN) {
+        if (fds[0].revents & posix.POLL.IN != 0) {
             const count = serial.read(buf[0..]) catch 0;
             if (count == 0) break;
             _ = try stdout.write(buf[0..count]);
         }
 
-        if (fds[1].revents == posix.POLL.IN) {
+        if (fds[1].revents & posix.POLL.IN != 0) {
             const count = stdin.read(buf[0..]) catch 0;
             if (count == 0) break;
             _ = try serial.write(buf[0..count]);
