@@ -1,4 +1,5 @@
 const std = @import("std");
+const options = @import("options");
 const mem = std.mem;
 const Allocator = std.mem.Allocator;
 const io = std.io;
@@ -106,6 +107,15 @@ fn mainArgs(gpa: Allocator, arena: Allocator, args: []const []const u8) !void {
         fatal("failed to open port '{s}', {s}", .{ port, @errorName(err) });
     };
     defer serial.close();
+
+    if (options.locking) {
+        const locked = serial.tryLock(.exclusive) catch |err| {
+            fatal("failed to lock port '{s}', {s}", .{ port, @errorName(err) });
+        };
+        if (locked) {
+            defer serial.unlock();
+        } else fatal("failed to lock port '{s}', {s}", .{ port, "port is locked" });
+    }
 
     try zig_serial.configureSerialPort(serial, serial_config);
 

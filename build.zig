@@ -1,6 +1,9 @@
 const std = @import("std");
+const Build = std.Build;
 
-pub fn build(b: *std.Build) void {
+pub fn build(b: *Build) void {
+    const options = getOptions(b);
+
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
@@ -17,6 +20,7 @@ pub fn build(b: *std.Build) void {
 
     const serial = b.dependency("serial", .{});
     exe.root_module.addImport("serial", serial.module("serial"));
+    exe.root_module.addOptions("options", options);
 
     b.installArtifact(exe);
 
@@ -38,4 +42,13 @@ pub fn build(b: *std.Build) void {
 
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_exe_unit_tests.step);
+}
+
+fn getOptions(b: *Build) *Build.Step.Options {
+    const locking = b.option(bool, "locking", "Lock ports with flock (default: true)") orelse true;
+
+    const options = b.addOptions();
+    options.addOption(bool, "locking", locking);
+
+    return options;
 }
